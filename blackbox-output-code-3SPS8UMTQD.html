@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outfit Matcher - कपड़े मैचिंग ऐप</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 40px;
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            border: 3px dashed #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #ff6b6b;
+            background: #fff;
+        }
+
+        .upload-area {
+            width: 100%;
+            height: 250px;
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            background: #f0f8ff;
+            border-color: #667eea;
+        }
+
+        .upload-area.dragover {
+            border-color: #ff6b6b;
+            background: #fff5f5;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .preview-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .preview-img {
+            max-width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .match-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .match-btn {
+            width: 100%;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+            border: none;
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .match-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(255, 107, 107, 0.4);
+        }
+
+        .match-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .outfit-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .outfit-item {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .outfit-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+
+        .outfit-img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .outfit-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+
+        .color-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .color-tag {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👗 Outfit Matcher</h1>
+            <p>अपने कपड़े अपलोड करें और परफेक्ट मैच पाएं!</p>
+        </div>
+
+        <div class="main-content">
+            <div class="upload-section">
+                <h3>📸 अपना कपड़ा अपलोड करें</h3>
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📷</div>
+                    <p>यहां क्लिक करें या ड्रैग-एंड-ड्रॉप करें</p>
+                    <p style="font-size: 12px; color: #666;">JPG, PNG (Max 5MB)</p>
+                </div>
+                <input type="file" id="fileInput" class="file-input" accept="image/*">
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                    Choose File
+                </button>
+                <div class="preview-container" id="previewContainer" style="display: none;">
+                    <img id="previewImg" class="preview-img" alt="Preview">
+                </div>
+            </div>
+
+            <div class="match-section">
+                <button class="match-btn" id="matchBtn" onclick="findMatches()" disabled>
+                    ✨ Find Perfect Matches
+                </button>
+                
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Matching outfits ढूंढ रहे हैं...</p>
+                </div>
+
+                <div class="results" id="results">
+                    <h3>🎯 Perfect Matches</h3>
+                    <div class="outfit-grid" id="outfitGrid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImg = document.getElementById('previewImg');
+        const matchBtn = document.getElementById('matchBtn');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const outfitGrid = document.getElementById('outfitGrid');
+
+        // Drag & Drop functionality
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (file.size > 5 * 1024 * 1024) {
+                alert('फाइल का साइज 5MB से ज्यादा नहीं होना चाहिए!');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImg.src = e.target.result;
+                previewContainer.style.display = 'flex';
+                matchBtn.disabled = false;
+                matchBtn.style.background = 'linear-gradient(45deg, #4ecdc4, #44a08d)';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function findMatches() {
+            if (matchBtn.disabled) return;
+
+            matchBtn.disabled = true;
+            loading.style.display = 'block';
+            results.classList.remove('show');
+
+            // Simulate API call
+            setTimeout(() => {
+                loading.style.display = 'none';
+                showMatches();
+                matchBtn.disabled = false;
+                matchBtn.style.background = 'linear-gradient(45deg, #ff6b6b, #feca57)';
+            }, 2000);
+        }
+
+        function showMatches() {
+            const outfits = [
+                { img: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=200', name: 'White Shirt', colors: ['White', 'Blue'] },
+                { img: 'https://images.unsplash.com/photo-1593770281980-1a988ad6e72f?w=200', name: 'Blue Jeans', colors: ['Blue', 'Denim'] },
+                { img: 'https://images.unsplash.com/photo-1581655353564-df123a1eb820?w=200', name: 'Black Jacket', colors: ['Black', 'White'] },
+                { img: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=200', name: 'Sneakers', colors: ['White', 'Blue'] },
+                { img: 'https://images.unsplash.com/photo-1595183104617-4e720dfb9f10?w=200', name: 'Watch', colors: ['Silver', 'Black'] },
+                { img: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200', name: 'Belt', colors: ['Brown', 'Black'] }
+            ];
+
+            outfitGrid.innerHTML = '';
+            outfits.forEach(outfit => {
+                const item = document.createElement('div');
+                item.className = 'outfit-item';
+                item.innerHTML = `
+                    <img src="${outfit.img}" alt="${outfit.name}" class="outfit-img">
+                    <div class="outfit-name">${outfit.name}</div>
+                    <div class="color-tags">
+                        ${outfit.colors.map(color => `<span class="color-tag" style="background: ${getColor(color)}; color: white;">${color}</span>`).join('')}
+                    </div>
+                `;
+                item.onclick = () => {
+                    alert(`${outfit.name} selected! Perfect match! 😎`);
+                };
+                outfitGrid.appendChild(item);
+            });
+
+            results.classList.add('show');
+        }
+
+        function getColor(colorName) {
+            const colors = {
+                'White': '#f0f0f0',
+                'Blue': '#3498db',
+                'Black': '#2c3e50',
+                'Denim': '#34495e',
+                'Silver': '#bdc3c7',
+                'Brown': '#8b4513'
+            };
+            return colors[colorName] || '#95a5a6';
+        }
+    </script>
+</body>
+</html>
